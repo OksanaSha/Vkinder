@@ -3,7 +3,10 @@ from random import randrange
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard
+
+import DbVk
 from MyVkApi import MyVkApi
+
 
 TOKEN_GROUP = ''
 TOKEN_USER = ''
@@ -116,11 +119,7 @@ def show_three_users(vk_user):
         attachment = ','.join(user["photos"])
         write_msg(user_id=vk_user.id, message=message, attachment=attachment)
 
-
-
-
-if __name__ == '__main__':
-
+def start_bot(session):
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.to_me:
             text_message = event.text.lower()
@@ -168,3 +167,11 @@ if __name__ == '__main__':
               break
             else:
                 write_msg(vk_user.id, "Не понял вашего ответа...")
+
+if __name__ == '__main__':
+    print('Start')
+    DbVk.Base.metadata.create_all(DbVk.engine)
+    session = DbVk.Session()
+    start_bot(session)
+    session.commit()
+    print('Finish')
