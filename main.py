@@ -22,7 +22,6 @@ RELATION_DICT = {
 }
 PARAMETERS_FOR_SEARCH = ['bdate', 'sex', 'relation', 'city']
 
-vk_user = MyVkApi(token=TOKEN_USER)
 vk_bot = vk_api.VkApi(token=TOKEN_GROUP)
 longpoll = VkLongPoll(vk_bot, wait=25)
 
@@ -126,9 +125,14 @@ def start_bot(session):
             sender_id = event.user_id
 
             if text_message in ('начать', 'привет', 'салют', 'хай', 'ghbdtn', 'start'):
+                DbVk.add_user_session(session=session, sender_id=sender_id)
+                vk_user = MyVkApi(token=TOKEN_USER)
                 vk_user.get_user_info(sender_id)
                 message = f'Салют, {vk_user.name}\n' \
-                         f'Ты здесь, чтобы найти себе пару. И я помогу.\n'
+                         f'Ты здесь, чтобы найти себе пару. И я помогу.\n' \
+                          f'Не забудь написать мне "пока" или нажать ' \
+                          f'кнопку "на сегодня хватит", ' \
+                          f'чтобы сохранить результаты поиска'
                 buttons = ['Поиск по текущим параметрам', 'Задать новые параметры']
                 write_msg(
                     user_id=vk_user.id,
@@ -138,26 +142,27 @@ def start_bot(session):
 
             elif text_message in ('поиск по текущим параметрам', 'задать новые параметры'):
                 bye_bye = None
-                if text_message == 'задать новые параметры':
-                    bye_bye = ask_params(PARAMETERS_FOR_SEARCH, vk_user)
-                elif text_message == 'поиск по текущим параметрам' and vk_user.missing_params:
-                    write_msg(vk_user.id, 'Мне нужно еще немного информации о вас.')
-                    bye_bye = ask_params(vk_user.missing_params, vk_user)
+                if vk_user:
+                    if text_message == 'задать новые параметры':
+                        bye_bye = ask_params(PARAMETERS_FOR_SEARCH, vk_user)
+                    elif text_message == 'поиск по текущим параметрам' and vk_user.missing_params:
+                        write_msg(vk_user.id, 'Мне нужно еще немного информации о вас.')
+                        bye_bye = ask_params(vk_user.missing_params, vk_user)
 
-                if bye_bye:
-                    send_goodbye_msg(vk_user)
-                else:
-                    buttons = [
-                        'Показать еще 3х человек',
-                        'Задать новые параметры',
-                        'На сегодня хватит'
-                    ]
-                    write_msg(
-                        user_id=vk_user.id,
-                        message='А теперь приступим к поиску.',
-                        keyboard=all_time_keyboard(buttons).get_keyboard()
-                    )
-                    show_three_users(vk_user)
+                    if bye_bye:
+                        send_goodbye_msg(vk_user)
+                    else:
+                        buttons = [
+                            'Показать еще 3х человек',
+                            'Задать новые параметры',
+                            'На сегодня хватит'
+                        ]
+                        write_msg(
+                            user_id=vk_user.id,
+                            message='А теперь приступим к поиску.',
+                            keyboard=all_time_keyboard(buttons).get_keyboard()
+                        )
+                        show_three_users(vk_user)
 
             elif text_message == 'показать еще 3х человек':
                 show_three_users(vk_user)

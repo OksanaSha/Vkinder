@@ -109,7 +109,6 @@ class MyVkApi(VkApi):
             else:
                 MyVkApi.already_seen_users.append(user['id'])
 
-
     def get_users_info(self) -> list:
         self.find_people()
         if MyVkApi.users_find_list:
