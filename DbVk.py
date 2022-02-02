@@ -51,16 +51,20 @@ def add_user_session(session, sender_id):
         new_user = BotUsers(user_id=sender_id, last_date=date.today())
         session.add(new_user)
 
-def add_found_user(session):
-    pass
 
-Base.metadata.create_all(engine)
-if __name__ == '__main__':
-    session = Session()
-    # user = BotUsers(user_id=126)
-
-    # session.add(user)
-    add_user_session(session, 125)
-    session.commit()
-
-print('+')
+def add_found_user(session, sender_id, found_user: dict):
+    new_user = session.query(FoundUsers).filter_by(vk_id=found_user['id']).first()
+    bot_user = session.query(BotUsers).filter(BotUsers.user_id == sender_id).one()
+    if new_user:
+        for user in bot_user.found_users:
+            if new_user.vk_id == user.vk_id:
+                return
+    else:
+        new_user = FoundUsers(
+            vk_id=found_user['id'],
+            name=found_user['name'],
+            url=found_user['url'],
+            photos=found_user['photos']
+        )
+        session.add(new_user)
+    bot_user.found_users.append(new_user)

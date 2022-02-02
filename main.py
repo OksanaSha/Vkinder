@@ -25,10 +25,12 @@ PARAMETERS_FOR_SEARCH = ['bdate', 'sex', 'relation', 'city']
 vk_bot = vk_api.VkApi(token=TOKEN_GROUP)
 longpoll = VkLongPoll(vk_bot, wait=25)
 
+
 def wait_new_message():
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.to_me:
             return event.text.lower()
+
 
 def one_time_keyboard(buttons: list):
     new_keyboard = VkKeyboard(one_time=True)
@@ -41,6 +43,7 @@ def one_time_keyboard(buttons: list):
             new_keyboard.add_line()
     return new_keyboard
 
+
 def all_time_keyboard(buttons: list):
     new_keyboard = VkKeyboard(one_time=False)
     for button in buttons:
@@ -51,6 +54,7 @@ def all_time_keyboard(buttons: list):
         if button != buttons[-1]:
             new_keyboard.add_line()
     return new_keyboard
+
 
 def write_msg(user_id, message, keyboard=None, attachment=None):
     vk_bot.method(
@@ -64,12 +68,14 @@ def write_msg(user_id, message, keyboard=None, attachment=None):
               }
     )
 
+
 def send_goodbye_msg(vk_user):
     write_msg(
         user_id=vk_user.id,
         message="Пока((",
         keyboard=all_time_keyboard(['Начать']).get_keyboard()
     )
+
 
 def ask_params(missing_params, vk_user):
     for param in missing_params:
@@ -111,14 +117,18 @@ def ask_params(missing_params, vk_user):
                     break
             write_msg(vk_user.id, 'Некорректный ввод')
 
-def show_three_users(vk_user):
+
+def show_three_users(vk_user, session):
     new_users = vk_user.get_users_info()
     for user in new_users:
+        DbVk.add_found_user(session, vk_user.id, user)
         message = f'{user["name"]}\n{user["url"]}'
         attachment = ','.join(user["photos"])
         write_msg(user_id=vk_user.id, message=message, attachment=attachment)
 
+
 def start_bot(session):
+
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.to_me:
             text_message = event.text.lower()
@@ -162,10 +172,10 @@ def start_bot(session):
                             message='А теперь приступим к поиску.',
                             keyboard=all_time_keyboard(buttons).get_keyboard()
                         )
-                        show_three_users(vk_user)
+                        show_three_users(vk_user, session)
 
             elif text_message == 'показать еще 3х человек':
-                show_three_users(vk_user)
+                show_three_users(vk_user, session)
 
             elif text_message in ('пока', 'на сегодня хватит'):
               send_goodbye_msg(vk_user)
