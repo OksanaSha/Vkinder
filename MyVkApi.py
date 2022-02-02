@@ -53,8 +53,9 @@ class MyVkApi(VkApi):
             'count': 1
         }
         response = self.method('database.getCities', values=values)
-        city_id = response['items'][0]['id']
-        return city_id
+        if response['items']:
+            city_id = response['items'][0]['id']
+            return city_id
 
 
     def find_people(self):

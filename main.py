@@ -81,15 +81,15 @@ def ask_params(missing_params, vk_user):
     for param in missing_params:
         while True:
             if param == 'bdate':
-                write_msg(vk_user.id, 'Год рождения?')
+                write_msg(vk_user.id, 'Год рождения?\n(YYYY)')
                 bdate = wait_new_message()
                 if bdate.lower() == 'пока':
                     return True
-                if bdate.isdigit() and 1900 <= int(bdate) <= 2006:
+                if bdate.isdigit() and 1930 <= int(bdate) <= 2006:
                     vk_user.bdate = bdate
                     break
             elif param == 'sex':
-                write_msg(vk_user.id, 'Пол?\n1 - женский\n2 - мужской')
+                write_msg(vk_user.id, 'Ваш пол:\n1 - женский\n2 - мужской')
                 sex = wait_new_message()
                 if sex.lower() == 'пока':
                     return True
@@ -113,18 +113,31 @@ def ask_params(missing_params, vk_user):
                 if city.lower() == 'пока':
                     return True
                 if city.isalpha():
-                    vk_user.city = vk_user.find_city_id(city)
-                    break
+                    city_id = vk_user.find_city_id(city)
+                    if city_id:
+                        vk_user.city = city_id
+                        break
             write_msg(vk_user.id, 'Некорректный ввод')
 
 
 def show_three_users(vk_user, session):
     new_users = vk_user.get_users_info()
-    for user in new_users:
-        DbVk.add_found_user(session, vk_user.id, user)
-        message = f'{user["name"]}\n{user["url"]}'
-        attachment = ','.join(user["photos"])
-        write_msg(user_id=vk_user.id, message=message, attachment=attachment)
+    if new_users:
+        for user in new_users:
+            DbVk.add_found_user(session, vk_user.id, user)
+            message = f'{user["name"]}\n{user["url"]}'
+            attachment = ','.join(user["photos"])
+            write_msg(user_id=vk_user.id, message=message, attachment=attachment)
+    else:
+        buttons = [
+            'Задать новые параметры',
+            'На сегодня хватит'
+        ]
+        write_msg(
+            user_id=vk_user.id,
+            message='Пользователи не найдены.',
+            keyboard=one_time_keyboard(buttons).get_keyboard()
+        )
 
 
 def start_bot(session):
